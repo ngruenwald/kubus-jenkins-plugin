@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials" xmlns:st="jelly:stapler">
+    <f:section title="Kubus">
+        <f:entry title="${%Kubus servers}">
+            <f:repeatable var="server" items="${descriptor.servers}" name="servers">
+                <table width="100%">
+                    <f:entry title="${%Server name}" field="name" description="${%A name for the server}">
+                        <f:textbox value="${server.name}" />
+                        <input type="hidden" name="id" value="${server}" />
+                    </f:entry>
+                    <f:entry title="${%Server URL}" field="url" description="${%The complete URL to the server} (${%e.g. http://repo.mydomain.com})">
+                        <f:textbox value="${server.url}" />
+                    </f:entry>
+                    <f:entry title="${%API Version}" field="apiVersion" description="${%The API version}">
+                        <f:textbox value="${server.apiVersion}" default="1" />
+                    </f:entry>
+                    <f:entry title="${%Credentials}" field="apiKeyId" description="${%API Key for access}">
+                        <c:select />
+                    </f:entry>
+                    <f:advanced>
+                        <f:entry title="${%Ignore SSL Certificate Errors}" field="ignoreCertificateErrors">
+                            <f:checkbox checked="${server.ignoreCertificateErrors}"/>
+                        </f:entry>
+                        <f:entry title="${%Connection timeout} (${%in seconds})" field="connectionTimeout" description="${%The time to wait for establishing the connection}">
+                            <f:textbox value="${server.connectionTimeout}" default="10"/>
+                        </f:entry>
+                        <f:entry title="${%Read timeout} (${%in seconds})" field="readTimeout" description="${%The time to wait while receiving the response}">
+                            <f:textbox value="${server.readTimeout}" default="10"/>
+                        </f:entry>
+                        <st:include page="configure-advanced.jelly" optional="true" />
+                    </f:advanced>
+                    <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection"
+                            with="apiKey,url,ignoreCertificateErrors"/>
+                    <f:entry title="">
+                        <div align="right">
+                            <f:repeatableDeleteButton/>
+                        </div>
+                    </f:entry>
+                </table>
+            </f:repeatable>
+        </f:entry>
+    </f:section>
+</j:jelly>

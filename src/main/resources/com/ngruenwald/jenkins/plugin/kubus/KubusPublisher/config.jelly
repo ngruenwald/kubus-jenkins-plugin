@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+
+    <f:entry title="${%Kubus server}" field="serverName">
+        <f:select />
+    </f:entry>
+
+    <f:entry title="${%File to upload}" field="sourceFile" description="Filename or pattern, e.g. build/release/*.rpm (first match only!)">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="${%Component}" field="component">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="${%Version Type}" field="versionType">
+        <f:select />
+    </f:entry>
+
+    <f:entry title="${%Version Value}" field="versionValue" description="Version string or regex search pattern, depending on the type.">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="${%Version Replace}" field="versionReplace" description="Regex replace pattern">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="${%SCM Branch}" field="scmBranch">
+        <f:textbox default="$${GIT_BRANCH}" />
+    </f:entry>
+
+    <f:entry title="${%SCM Commit}" field="scmCommit">
+        <f:textbox default="$${GIT_COMMIT}" />
+    </f:entry>
+
+    <f:entry title="${%SCM URL}" field="scmURL">
+        <f:textbox default="$${GIT_URL}" />
+    </f:entry>
+
+    <f:entry title="${%Repository}" field="repository">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="${%Platform}" field="platform">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="${%Artifact type}" field="type">
+        <f:select />
+    </f:entry>
+
+</j:jelly>

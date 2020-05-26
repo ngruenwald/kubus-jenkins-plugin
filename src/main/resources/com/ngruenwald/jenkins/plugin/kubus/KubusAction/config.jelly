@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
+    <l:layout title="Kubus Artifact">
+        <l:side-panel>
+            <st:include page="sidepanel.jelly" it="${it.run}" optional="true" />
+        </l:side-panel>
+        <l:main-panel>
+            <!--
+            <table>
+                <tr><td><b>Server</b></td><td>${it.serverName}</td></tr>
+                <tr><td><b>Component</b></td><td>${it.component}</td></tr>
+                <tr><td><b>Version</b></td><td>${it.version}</td></tr>
+                <tr><td><b>Repository</b></td><td>${it.repository}</td></tr>
+                <tr><td><b>Platform</b></td><td>${it.platform}</td></tr>
+                <tr><td><b>Type</b></td><td>${it.type}</td></tr>
+                <tr><td><b>Filename</b></td><td>${it.filePath}</td></tr>
+                <tr><td><b>SCM Branch</b></td><td>${it.scmBranch}</td></tr>
+                <tr><td><b>SCM Commit</b></td><td>${it.scmCommit}</td></tr>
+                <tr><td><b>SCM URL</b></td><td>${it.scmURL}</td></tr>
+                <tr><td><b>Build Number</b></td><td>${it.buildNumber}</td></tr>
+                <tr><td><b>Build Name</b></td><td>${it.buildName}</td></tr>
+                <tr><td><b>Build Node</b></td><td>${it.buildNode}</td></tr>
+                <tr><td><b>Build URL</b></td><td>${it.buildURL}</td></tr>
+            </table>
+            -->
+        </l:main-panel>
+    </l:layout>
+</j:jelly>
