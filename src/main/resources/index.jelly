@@ -1,0 +1,4 @@
+<?jelly escape-by-default='true'?>
+<div>
+    This plugin uploads build artifacts to an <a href="https://github.com/ngruenwald/kubus-server">Kubus Server</a> installation.
+</div>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.jenkins-ci.plugins</groupId>
+        <artifactId>plugin</artifactId>
+        <version>3.54</version>
+        <relativePath />
+    </parent>
+
+    <properties>
+        <jenkins.version>2.222.1</jenkins.version>
+        <slf4jVersion>1.7.29</slf4jVersion>
+        <java.level>8</java.level>
+    </properties>
+
+    <name>Kubus Publisher</name>
+    <description>This plugin uploads build artifacts to a Kubus Server installation.</description>
+    <url>https://github.com/ngruenwald/kubus-jenkins-plugin</url>
+    <version>1.0.0-SNAPSHOT</version>
+    <artifactId>kubus</artifactId>
+    <groupId>io.jenkins.plugins</groupId>
+    <packaging>hpi</packaging>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+        </license>
+    </licenses>
+
+    <!-- If you want this to appear on the wiki page:
+    <developers>
+      <developer>
+        <id>bhacker</id>
+        <name>Bob Q. Hacker</name>
+        <email>bhacker@nowhere.net</email>
+      </developer>
+    </developers> -->
+
+    <!-- Assuming you want to host on @jenkinsci:
+    <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
+    <scm>
+        <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
+    </scm>
+    -->
+    <repositories>
+        <repository>
+            <id>repo.jenkins-ci.org</id>
+            <url>https://repo.jenkins-ci.org/public/</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>repo.jenkins-ci.org</id>
+            <url>https://repo.jenkins-ci.org/public/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>3.14.8</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>credentials</artifactId>
+            <version>2.3.7</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>plain-credentials</artifactId>
+            <version>1.7</version>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+</project>
