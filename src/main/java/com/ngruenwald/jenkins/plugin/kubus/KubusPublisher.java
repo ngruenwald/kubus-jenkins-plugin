@@ -92,8 +92,10 @@ public final class KubusPublisher extends Recorder{
         this.versionReplace = versionReplace;
         this.scmBranch = scmBranch;
         this.scmCommit = scmCommit;
+        this.scmURL = scmURL;
         this.repository = repository;
         this.platform = platform;
+        this.type = type;
     }
 
     @Override
