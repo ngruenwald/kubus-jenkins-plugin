@@ -307,6 +307,10 @@ public final class KubusPublisher extends Recorder{
         return platform;
     }
 
+    public String getType() {
+        return type;
+    }
+
     private KubusServer getServer(BuildListener listener) {
         KubusConfiguration descriptor =
             (KubusConfiguration) Jenkins.get().getDescriptor(KubusConfiguration.class);
