@@ -16,7 +16,7 @@
     <name>Kubus Publisher</name>
     <description>This plugin uploads build artifacts to a Kubus Server installation.</description>
     <url>https://github.com/ngruenwald/kubus-jenkins-plugin</url>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <artifactId>kubus</artifactId>
     <groupId>io.jenkins.plugins</groupId>
     <packaging>hpi</packaging>
