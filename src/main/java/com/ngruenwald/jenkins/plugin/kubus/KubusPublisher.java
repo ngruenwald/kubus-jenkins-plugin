@@ -1,13 +1,5 @@
 package com.ngruenwald.jenkins.plugin.kubus;
 
-import okhttp3.HttpUrl;
-import okhttp3.MediaType;
-import okhttp3.MultipartBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -15,32 +7,21 @@ import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
-import hudson.model.Item;
 import hudson.model.Result;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
-import hudson.util.CopyOnWriteList;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URL;
-import java.nio.file.Paths;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 
 import net.sf.json.JSONObject;
 
@@ -115,141 +96,111 @@ public final class KubusPublisher extends Recorder{
             return true;
         }
 
-        // try {
+        KubusServer server = getServer(listener);
+        if (server == null) {
+            listener.error("Kubus server not found");
+            return false;
+        }
 
-            KubusServer server = getServer(listener);
-            if (server == null) {
-                listener.error("Kubus server not found");
-                return false;
+        String serverURL = server.getUrl();
+        int apiVersion = server.getApiVersion();
+
+        FilePath filePath = getSourcePath(build, listener);
+        if (filePath == null) {
+            return false;
+        }
+
+        String fileName = filePath.getName();
+        String apiKey = getApiKey(server.getApiKeyId());
+        Map<String, String> envVars = build.getEnvironment(listener);
+
+        listener.getLogger().println(
+            String.format("%s, %s, %s", versionType, versionValue, versionReplace)
+        );
+
+        String version = null;
+        if (versionType.equals(VERSION_FIXED_NAME)) {
+            version = Util.replaceMacro(versionValue, envVars);
+        } else {
+            String search = Util.replaceMacro(versionValue, envVars);
+            String replace = Util.replaceMacro(versionReplace, envVars);
+            String source = "";
+            if (versionType.equals(VERSION_FILEPATTERN_NAME)) {
+                source = fileName;
             }
-
-            FilePath filePath = getSourcePath(build, listener);
-            if (filePath == null) {
-                return false;
+            if (versionType.equals(VERSION_BRANCHPATTERN_NAME)) {
+                source = Util.replaceMacro(scmBranch, envVars);
             }
+            version = source.replaceAll(search, replace);
+        }
 
-            String fileName = filePath.getName();
-            File file = new File(filePath.toURI());
-            MediaType mediaType = getMediaType(fileName);
-            String apiKey = getApiKey(server.getApiKeyId());
-            Map<String, String> envVars = build.getEnvironment(listener);
+        if (version == null) {
+            listener.error("Could not determine artifact version");
+            return false;
+        }
 
-            listener.getLogger().println(
-                String.format("%s, %s, %s", versionType, versionValue, versionReplace)
-            );
+        long   buildNumber = 0;
+        String buildNumberStr = envVars.get("BUILD_NUMBER");
+        String buildName = envVars.get("JOB_NAME");
+        String buildNode = envVars.get("NODE_NAME");
+        String buildURL  = envVars.get("BUILD_URL");
 
-            String version = null;
-            if (versionType.equals(VERSION_FIXED_NAME)) {
-                version = Util.replaceMacro(versionValue, envVars);
-            } else {
-                String search = Util.replaceMacro(versionValue, envVars);
-                String replace = Util.replaceMacro(versionReplace, envVars);
-                String source = "";
-                if (versionType.equals(VERSION_FILEPATTERN_NAME)) {
-                    source = fileName;
-                }
-                if (versionType.equals(VERSION_BRANCHPATTERN_NAME)) {
-                    source = Util.replaceMacro(scmBranch, envVars);
-                }
-                version = source.replaceAll(search, replace);
-            }
+        if (buildNumberStr != null) {
+            buildNumber = Long.parseLong(buildNumberStr);
+        }
+        if (buildName == null) {
+            buildName = "";
+        }
+        if (buildNode == null) {
+            buildNode = "";
+        }
+        if (buildURL == null) {
+            buildURL = "";
+        }
 
-            if (version == null) {
-                listener.error("Could not determine artifact version");
-                return false;
-            }
+        JSONObject scmInfo = new JSONObject();
+        scmInfo.put("branch", Util.replaceMacro(scmBranch, envVars));
+        scmInfo.put("commit", Util.replaceMacro(scmCommit, envVars));
+        scmInfo.put("url",    Util.replaceMacro(scmURL, envVars));
 
-            long   buildNumber = 0;
-            String buildNumberStr = envVars.get("BUILD_NUMBER");
-            String buildName = envVars.get("JOB_NAME");
-            String buildNode = envVars.get("NODE_NAME");
-            String buildURL  = envVars.get("BUILD_URL");
+        JSONObject buildInfo = new JSONObject();
+        buildInfo.put("number", buildNumber);
+        buildInfo.put("name", buildName);
+        buildInfo.put("node", buildNode);
+        buildInfo.put("url", buildURL);
 
-            if (buildNumberStr != null) {
-                buildNumber = Long.parseLong(buildNumberStr);
-            }
-            if (buildName == null) {
-                buildName = "";
-            }
-            if (buildNode == null) {
-                buildNode = "";
-            }
-            if (buildURL == null) {
-                buildURL = "";
-            }
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("component", Util.replaceMacro(component, envVars));
+        jsonObject.put("version", Util.replaceMacro(version, envVars));
+        jsonObject.put("scm", scmInfo);
+        jsonObject.put("build", buildInfo);
+        jsonObject.put("repository", Util.replaceMacro(repository, envVars));
+        jsonObject.put("platform", Util.replaceMacro(platform, envVars));
+        jsonObject.put("filename", Util.replaceMacro(fileName, envVars));
+        jsonObject.put("type", type);
 
-            HttpUrl serverUrl = HttpUrl.parse(server.getUrl());
-            HttpUrl requestUrl = serverUrl.newBuilder()
-                .addPathSegment("api")
-                .addPathSegment(String.format("v%d", server.getApiVersion()))
-                .addPathSegment("upload")
-                .build();
+        filePath.act(new KubusUploader(
+            serverURL, apiVersion, apiKey, jsonObject.toString(), filePath, listener
+        ));
 
-            JSONObject scmInfo = new JSONObject();
-            scmInfo.put("branch", Util.replaceMacro(scmBranch, envVars));
-            scmInfo.put("commit", Util.replaceMacro(scmCommit, envVars));
-            scmInfo.put("url",    Util.replaceMacro(scmURL, envVars));
-
-            JSONObject buildInfo = new JSONObject();
-            buildInfo.put("number", buildNumber);
-            buildInfo.put("name", buildName);
-            buildInfo.put("node", buildNode);
-            buildInfo.put("url", buildURL);
-
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("component", Util.replaceMacro(component, envVars));
-            jsonObject.put("version", Util.replaceMacro(version, envVars));
-            jsonObject.put("scm", scmInfo);
-            jsonObject.put("build", buildInfo);
-            jsonObject.put("repository", Util.replaceMacro(repository, envVars));
-            jsonObject.put("platform", Util.replaceMacro(platform, envVars));
-            jsonObject.put("filename", Util.replaceMacro(fileName, envVars));
-            jsonObject.put("type", type);
-
-            RequestBody requestBody = new MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
-                .addFormDataPart("meta", jsonObject.toString())
-                .addFormDataPart("file", fileName, RequestBody.create(mediaType, file))
-                .build();
-
-            Request request = new Request.Builder()
-                .header("X-API-Key", apiKey)
-                .url(requestUrl)
-                .post(requestBody)
-                .build();
-
-            OkHttpClient client = new OkHttpClient();
-            try (Response response = client.newCall(request).execute()) {
-                if (!response.isSuccessful()) {
-                    throw new IOException("Unexpected code " + response);
-                }
-                listener.getLogger().println(
-                    String.format("%s %s", response.code(), response.message()));
-            }
-
-            build.addAction(
-                new KubusAction(
-                    server.getName(),
-                    component,
-                    version,
-                    scmBranch,
-                    scmCommit,
-                    scmURL,
-                    buildNumber,
-                    buildName,
-                    buildNode,
-                    buildURL,
-                    repository,
-                    platform,
-                    fileName,
-                    type
-                )
-            );
-
-        // } catch (Exception e) {
-        //     e.printStackTrace(listener.getLogger());
-        //     return false;
-        // }
+        build.addAction(
+            new KubusAction(
+                server.getName(),
+                component,
+                version,
+                scmBranch,
+                scmCommit,
+                scmURL,
+                buildNumber,
+                buildName,
+                buildNode,
+                buildURL,
+                repository,
+                platform,
+                fileName,
+                type
+            )
+        );
 
         return true;
     }
@@ -337,33 +288,6 @@ public final class KubusPublisher extends Recorder{
         return c != null ? c.getApiKey().getPlainText() : "";
     }
 
-    private MediaType getMediaType(String fileName) {
-        String mediaType = "application/octet-stream";
-
-        if (fileName.endsWith(".zip")) {
-            mediaType = "application/zip";
-        }
-        else if (fileName.endsWith(".rpm")) {
-            mediaType = "application/x-rpm";
-        }
-
-        return MediaType.parse(mediaType);
-    }
-
-/*
-    public KubusServer getServer() {
-        KubusServer[] servers = DESCRIPTOR.getServers();
-        if (serverName == null && servers.length > 0) {
-            return servers[0];
-        }
-        for (KubusServer server : servers) {
-            if (server.getName().equals(serverName)) {
-                return server;
-            }
-        }
-        return null;
-    }
-*/
     private FilePath getSourcePath(
         AbstractBuild<?, ?> build,
         BuildListener listener) throws InterruptedException, IOException {
@@ -400,9 +324,7 @@ public final class KubusPublisher extends Recorder{
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
-/*
-        private final CopyOnWriteList<KubusServer> servers = new CopyOnWriteList<KubusServer>();
-*/
+
         public DescriptorImpl() {
             super(KubusPublisher.class);
             load();
@@ -422,17 +344,6 @@ public final class KubusPublisher extends Recorder{
             return Messages.KubusPublisher_DisplayName();
         }
 
-/*
-        public KubusServer[] getServers() {
-            Iterator<KubusServer> it = servers.iterator();
-            int size = 0;
-            while (it.hasNext()) {
-                it.next();
-                size++;
-            }
-            return servers.toArray(new KubusServer[size]);
-        }
-*/
         public FormValidation doCheckServerName(@QueryParameter String value) {
             if (value == null || value.isEmpty()) {
                 return FormValidation.error(Messages.server_required());
