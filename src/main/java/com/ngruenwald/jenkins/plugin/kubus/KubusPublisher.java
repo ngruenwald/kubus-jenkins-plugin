@@ -301,19 +301,22 @@ public final class KubusPublisher extends Recorder{
         Map<String, String> envVars = build.getEnvironment(listener);
 
         // Find first matching file
-        String expanded = Util.replaceMacro(sourceFile, envVars);
-        FilePath[] sourceFiles = null;
+        String[] patterns = sourceFile.split(",");
+        for (String pattern : patterns) {
+            String expanded = Util.replaceMacro(pattern.trim(), envVars);
+            FilePath[] sourceFiles = null;
 
-        FilePath tmp = new FilePath(workSpace, expanded);
+            FilePath tmp = new FilePath(workSpace, expanded);
 
-        if (tmp.exists() && tmp.isDirectory()) {
-            sourceFiles = tmp.list("**/*");
-        } else {
-            sourceFiles = workSpace.list(expanded);
-        }
+            if (tmp.exists() && tmp.isDirectory()) {
+                sourceFiles = tmp.list("**/*");
+            } else {
+                sourceFiles = workSpace.list(expanded);
+            }
 
-        if (sourceFiles.length > 0) {
-            return sourceFiles[0];
+            if (sourceFiles.length > 0) {
+                return sourceFiles[0];
+            }
         }
 
         listener.error("Source file not found");
