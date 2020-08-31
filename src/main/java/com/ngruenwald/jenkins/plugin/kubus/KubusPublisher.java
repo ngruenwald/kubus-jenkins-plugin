@@ -86,14 +86,11 @@ public final class KubusPublisher extends Recorder{
         BuildListener listener) throws InterruptedException, IOException
     {
         Result buildResult = build.getResult();
-        if (buildResult == null) {
-            listener.getLogger().println("Kubus Publisher: Skipping because of missing build result");
-            return true;
-        }
-
-        if (buildResult.isWorseOrEqualTo(Result.FAILURE)) {
-            listener.getLogger().println(Messages.KubusPublisher_SkipFailure());
-            return true;
+        if (buildResult != null) {
+            if (buildResult.isWorseOrEqualTo(Result.FAILURE)) {
+                listener.getLogger().println(Messages.KubusPublisher_SkipFailure());
+                return true;
+            }
         }
 
         KubusServer server = getServer(listener);
